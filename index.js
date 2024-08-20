@@ -22,6 +22,11 @@ app.use(morgan("tiny"));
 
 app.use("/", indexRouter);
 
+app.use((err, req, res, next) => {
+  const errMsg = err ? err.toString() : "Something went wrong";
+  res.status(500).json({ data: "", errMsg });
+});
+
 app.listen(PORT, () => {
   console.log(`Application is running in ${PORT}`);
 });
