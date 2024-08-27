@@ -9,6 +9,7 @@ const schema = new Schema(
     image: String,
     roles: { type: [String], enum: ["admin", "user"] },
     isActive: { type: Boolean, require: true, default: false },
+    isBlocked: { type: Boolean, require: true, default: false },
     token: String,
   },
   {
