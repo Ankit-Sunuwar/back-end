@@ -11,6 +11,8 @@ const schema = new Schema(
     isActive: { type: Boolean, require: true, default: false },
     isBlocked: { type: Boolean, require: true, default: false },
     token: String,
+    created_by: String,
+    updated_by: String, // TODO
   },
   {
     timestamps: true,

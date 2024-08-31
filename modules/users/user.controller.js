@@ -2,6 +2,7 @@ const Model = require("./user.model");
 const { genHash, compareHash } = require("../../utilis/secure");
 const { genOTP, genToken } = require("../../utilis/token");
 const { sendEmail } = require("../../services/mailer");
+const { model } = require("mongoose");
 
 const register = async (payload) => {
   const { password, roles, isActice, ...rest } = payload;
@@ -123,10 +124,20 @@ const changePassword = async ({ email, oldPassword, newPassword }) => {
   return { data: null, msg: "Password Changed Sucessfully" };
 };
 
-const updateProfile = () => {}; // Special update case using role middleware
+const updateProfile = async (payload) => {
+  const { updated_by: currentUser, ...rest } = payload;
+  return await Model.findByIdAndUpdate({ _id: currentUser }, rest, {
+    new: true,
+  }).select("-password");
+}; // Special update case using role middleware
 
 // Admin Controllers
-const resetPassword = async ({ email, newPassword }) => {
+const resetPassword = async ({
+  email,
+  newPassword,
+  updated_by,
+  created_by,
+}) => {
   //1. find the user using email; isBlocked; isActive
   const user = await Model.findOne({ email, isActive: true, isBlocked: false });
   if (!user) throw new Error("User not found");
@@ -135,7 +146,7 @@ const resetPassword = async ({ email, newPassword }) => {
   //4. update the user data with new password
   const updatedUser = await Model.findOneAndUpdate(
     { email },
-    { password },
+    { password, updated_by, created_by },
     { new: true }
   );
   if (!updatedUser) throw new Error("Password Reset failed");
@@ -161,10 +172,28 @@ const blockUser = async ({ email }) => {
   };
 };
 
-const create = (payload) => {};
+const create = async (payload) => {
+  const { password, updated_by, ...rest } = payload;
+  rest.isActive = true;
+  rest.created_by = updated_by;
+  rest.password = genHash(password);
+  const user = await Model.create(rest);
+  return Model.findOne({ email: user?.email }).select("-password");
+};
+
 const list = () => {}; // Advance DB Operations
-const getById = () => {};
-const updateById = () => {};
+
+const getById = (_id) => {
+  return Model.findOne({ _id }).select("-password");
+};
+
+const updateById = async ({ id, payload }) => {
+  const user = await Model.findOne({ _id: id });
+  if (!user) throw new Error("User not found");
+  return await Model.findOneAndUpdate({ _id: id }, payload, {
+    new: true, // naya data aaunxa ani return hunxa.
+  }).select("-password");
+};
 
 module.exports = {
   create,
