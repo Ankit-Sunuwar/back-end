@@ -181,7 +181,66 @@ const create = async (payload) => {
   return Model.findOne({ email: user?.email }).select("-password");
 };
 
-const list = () => {}; // Advance DB Operations
+const list = async ({ filter, search, page = 1, limit = 10 }) => {
+  let currentPage = +page;
+  currentPage = currentPage < 1 ? 1 : currentPage;
+  // multiple filter (role, status)
+  // const { isBlocked, isActive } = filter;
+
+  // search
+  const { name } = search;
+
+  const query = [];
+
+  if (name) {
+    query.push({
+      $match: {
+        name: new RegExp(name, "gi"),
+      },
+    });
+  }
+
+  // pagination
+  query.push(
+    {
+      $facet: {
+        metadata: [
+          {
+            $count: "total",
+          },
+        ],
+        data: [
+          {
+            $skip: (currentPage - 1) * +limit, // "+" garyo bhani jahile number ma hunxa. Same as, type conversion.
+          },
+          {
+            $limit: +limit,
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        total: {
+          $arrayElemAt: ["$metadata.total", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        metadata: 0,
+      },
+    }
+  );
+
+  const result = await Model.aggregate(query);
+  return {
+    data: result[0]?.data,
+    page: +currentPage,
+    limit: +limit,
+    total: result[0].total || 0,
+  };
+}; // Advance DB Operations (Aggregation)
 
 const getById = (_id) => {
   return Model.findOne({ _id }).select("-password");

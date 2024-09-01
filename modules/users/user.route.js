@@ -15,6 +15,21 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage }); // multer(opts)
 
+router.get("/", async (req, res, next) => {
+  try {
+    const { name, page, limit, isBlocked, isActive } = req.query;
+    const search = { name };
+    const filter = {
+      isBlocked: isBlocked ?? false,
+      isActive: isActive ?? true,
+    };
+    const result = await Controller.list({ filter, search, page, limit });
+    res.json({ data: result, msg: "User List Generated Sucessfully" });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.post("/login", validate, async (req, res, next) => {
   try {
     const result = await Controller.login(req.body);
