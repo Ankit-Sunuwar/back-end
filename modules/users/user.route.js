@@ -15,21 +15,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage }); // multer(opts)
 
-router.get("/", async (req, res, next) => {
+router.get("/", secureAPI(["admin"]), async (req, res, next) => {
   try {
     const { name, page, limit, isBlocked, isActive } = req.query;
+    const filter = { isBlocked, isActive };
     const search = { name };
-    const filter = {
-      isBlocked: isBlocked ?? false,
-      isActive: isActive ?? true,
-    };
     const result = await Controller.list({ filter, search, page, limit });
-    res.json({ data: result, msg: "User List Generated Sucessfully" });
+    res.json({ data: result, msg: "User list generated successfully" });
   } catch (e) {
     next(e);
   }
 });
-
 router.post("/login", validate, async (req, res, next) => {
   try {
     const result = await Controller.login(req.body);
@@ -153,3 +149,7 @@ router.put("/:id", secureAPI(["admin"]), async (req, res, next) => {
 });
 
 module.exports = router;
+
+// RBAC (Role based) => admin, user, manager, receptionist
+// ABAC (Attribute based) => resource ( login, create, manage )
+// PBAC (Permission based) => read, write, update, delete

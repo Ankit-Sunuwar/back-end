@@ -192,6 +192,21 @@ const list = async ({ filter, search, page = 1, limit = 10 }) => {
 
   const query = [];
 
+  if (filter?.isActive === "yes" || filter?.isActive === "no") {
+    query.push({
+      $match: {
+        isActive: filter?.isActive === "yes" ? true : false,
+      },
+    });
+  }
+  if (filter?.isBlocked === "yes" || filter?.isBlocked === "no") {
+    query.push({
+      $match: {
+        isBlocked: filter?.isBlocked === "yes" ? true : false,
+      },
+    });
+  }
+
   if (name) {
     query.push({
       $match: {
